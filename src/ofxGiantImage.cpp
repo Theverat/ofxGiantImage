@@ -9,10 +9,11 @@
 
 
 //--------------------------------------------------------
-ofxGiantImage::ofxGiantImage(){
-    wtiles = htiles = width = height = 0;
-    tileSize = 512; // ofImage uses more than the imagesize for the openGL texture, so maybe I should stay a bit under the ideal?
-}
+// Regarding tilesize(512): ofImage uses more than the imagesize for the
+// openGL texture, so maybe I should stay a bit under the ideal?
+ofxGiantImage::ofxGiantImage()
+    : width(0), height(0), wtiles(0), htiles(0), tileSize(512), allocated(false)
+{}
 
 //--------------------------------------------------------
 ofxGiantImage::~ofxGiantImage(){
@@ -25,7 +26,7 @@ ofxGiantImage::~ofxGiantImage(){
 }
 
 //--------------------------------------------------------
-void ofxGiantImage::loadImage(string filePath){
+void ofxGiantImage::load(string filePath){
     
     // ofImage does a weird hack for the edges of openGL textures switch that off
     ofDisableTextureEdgeHack();
@@ -34,28 +35,31 @@ void ofxGiantImage::loadImage(string filePath){
     // load into a big image
     ofImage * img = new ofImage();
     img->setUseTexture(false);
-    if(!img->loadImage(filePath)){
+    if(!img->load(filePath)){
         cout << "I couldn't load the image from path: "<<filePath<<endl;
         return;
     }
-    if(!(img->type == OF_IMAGE_COLOR)){
+    if(img->getImageType() != OF_IMAGE_COLOR){
         cout << "WARNING the ofxTile can only display 3 channel color images now! "<<endl;
         return;
     }
     
-    width = img->width;
-    height = img->height;
+    width = img->getWidth();
+    height = img->getHeight();
     cout << "Loaded source image of "<<width<<" by "<<height<<" pixels"<<endl;
     wtiles = (int) ceilf(width/(float)tileSize);
     htiles = (int) ceilf(height/(float)tileSize);
     
+    const int imgWidth = static_cast<int>(width);
+    const int imgHeight = static_cast<int>(height);
+    
     // in the special and stupid case that you load a source image that is smaller than the size of a tile just use the source image.
-    if( width < tileSize ||  height < tileSize){
+    if( width < tileSize ||  height < tileSize) {
         unsigned char * imgpix = img->getPixels();
-        unsigned char tilepix[3*img->width*img->height];
+        unsigned char tilepix[3 * imgWidth * imgHeight];
         ofTexture * tile = new ofTexture();
-        tile->allocate(img->width, img->height, GL_RGB);
-        tile->loadData(tilepix, img->width, img->height, GL_RGB);
+        tile->allocate(imgWidth, imgHeight, GL_RGB);
+        tile->loadData(tilepix, imgWidth, imgHeight, GL_RGB);
         tiles.push_back(tile);
         img->clear();
         delete img;
@@ -83,7 +87,7 @@ void ofxGiantImage::loadImage(string filePath){
             // copy pixels into tilepix row by row
             for (int iy = 0; iy < tileHeight; iy++) {
                 memcpy(&(tilepix[3 * (iy * tileWidth)]),
-                       &(imgpix[3 * ( x1 + (y1+iy)*img->width)]),
+                       &(imgpix[3 * ( x1 + (y1+iy)*imgWidth)]),
                        3 * tileSize * sizeof(unsigned char));
             }
             
@@ -103,9 +107,14 @@ void ofxGiantImage::loadImage(string filePath){
     img->clear();
     delete img;
     
+    allocated = true;
+    
     // switch the ofImage texture hack back on
     ofEnableTextureEdgeHack();
+}
 
+bool ofxGiantImage::isAllocated() const {
+    return allocated;
 }
 
 //------------------------------------------------
@@ -156,7 +165,7 @@ void ofxGiantImage::drawBounds(float x, float y, float w, float h){
 			tile = tiles[ ix + (iy * wtiles)];
             ofPushMatrix();
             ofTranslate(ix * tileSize, iy * tileSize);
-            ofRect(0, 0,  tile->getWidth(),tile->getHeight());
+            ofDrawRectangle(0, 0,  tile->getWidth(),tile->getHeight());
             
 
             ofPopMatrix();
@@ -175,7 +184,7 @@ void ofxGiantImage::drawBounds(float x, float y, float w, float h){
     ofScale(800/width, 800/width);
     for(int ix = 0 ; ix < wtiles; ix ++ ){
         for(int iy = 0 ; iy < htiles; iy++){
-            ofRect(ix * tileSize, iy * tileSize,  tiles[ ix + (iy * wtiles)]->getWidth(), tiles[ ix + (iy * wtiles)]->getHeight());
+            ofDrawRectangle(ix * tileSize, iy * tileSize,  tiles[ ix + (iy * wtiles)]->getWidth(), tiles[ ix + (iy * wtiles)]->getHeight());
         }
     }
     
@@ -184,7 +193,7 @@ void ofxGiantImage::drawBounds(float x, float y, float w, float h){
     for(int ix = x0 ; ix < maxix; ix ++ ){
         for(int iy = y0 ; iy < maxiy; iy++){
             
-            ofRect(ix * tileSize, iy * tileSize,  tiles[ ix + (iy * wtiles)]->getWidth(), tiles[ ix + (iy * wtiles)]->getHeight());
+            ofDrawRectangle(ix * tileSize, iy * tileSize,  tiles[ ix + (iy * wtiles)]->getWidth(), tiles[ ix + (iy * wtiles)]->getHeight());
         }
     }
     ofPopMatrix();

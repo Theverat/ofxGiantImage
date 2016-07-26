@@ -10,7 +10,7 @@
  
  To do this it creates a grid of tiles of ofTextures and draws them only when they are necessary.
  
- It has been tested to work very smoothly on 
+ It has been tested to work very smoothly on
  Macbook (13-inch, Aluminum, Late 2008) / 2 GHz Intel Core 2 Duo / 8 GB 1333 MHz DDR3 / NVIDIA GeForce 9400M 256 MB
  Mac Mini (2013) / 2,5-GHz dual-core Intel Core i5 / 4 GB (2x 2 GB) 1600-MHz DDR3-geheugen / Intel HD Graphics 4000
  on a 2560 x 1400 pixels display
@@ -37,7 +37,8 @@ public:
     ofxGiantImage();
     ~ofxGiantImage();
     
-    void loadImage(string filePath); // load an image, just like ofImage
+    void load(string filePath); // load an image, just like ofImage
+    bool isAllocated() const;
     void draw(float x, float y, float w, float h); // draw the tiles that fall within the rect x,y,w,h
     void drawBounds(float x, float y, float w, float h); // For debugging, draws the tiles' bounding rects
 
@@ -47,6 +48,8 @@ public:
     int wtiles;     // number of tiles in the horizontal direction
     int htiles;     // number of tiles in the vertical direction
     int tileSize;   // default to 256 pixels, arbitrary choice
+    
+    bool allocated;
     
     vector <ofTexture*> tiles;
     
